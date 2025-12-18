@@ -1,0 +1,92 @@
+.hw-root {
+  /* Defaults; can be overridden by inline CSS vars from props */
+  --duration: 800ms;
+  --stagger: 60ms;
+  --y: 8px;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+/* When motion is disabled via prop */
+.hw-root.no-motion {
+  --duration: 0ms;
+  --stagger: 0ms;
+}
+
+.hw-text {
+  display: inline-flex;
+  flex-wrap: wrap;
+  line-height: 1.2;
+}
+
+.hw-char {
+  opacity: 0;
+  transform: translateY(var(--y));
+  will-change: opacity, transform;
+  animation-name: hw-fade-up;
+  animation-duration: var(--duration);
+  animation-timing-function: cubic-bezier(0.2, 0.8, 0.2, 1);
+  animation-fill-mode: forwards;
+  animation-delay: calc(var(--i) * var(--stagger));
+}
+
+@keyframes hw-fade-up {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Replay button styling */
+.hw-replayBtn {
+  appearance: none;
+  font: inherit;
+  padding: 0.4rem 0.7rem;
+  border-radius: 6px;
+  border: 1px solid #d0d5dd;
+  background: #fff;
+  color: #111827;
+  cursor: pointer;
+  transition: box-shadow 120ms ease, transform 120ms ease;
+}
+.hw-replayBtn:hover {
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08), 0 0 0 4px rgba(59, 130, 246, 0.15);
+}
+.hw-replayBtn:active {
+  transform: translateY(1px);
+}
+.hw-replayBtn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.45);
+}
+.hw-root.no-motion .hw-replayBtn {
+  display: none;
+}
+
+/* Respect user motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  .hw-char {
+    animation: none !important;
+    opacity: 1;
+    transform: none;
+  }
+  .hw-replayBtn {
+    display: none;
+  }
+}
+
+/* Screen reader only utility */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
