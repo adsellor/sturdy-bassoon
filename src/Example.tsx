@@ -10,7 +10,7 @@ export default function Example() {
         fontFamily: 'system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica Neue, Arial, sans-serif',
       }}
     >
-      <HelloWorldAnimation text="Hello World" />
+      <HelloWorldAnimation text="Goodbye" />
     </div>
   );
 }
