@@ -29,7 +29,7 @@ Start Expo and launch the iOS simulator:
 npx expo start --ios
 ```
 
-The home screen centers the blue “Hello” text, auto-plays the bounce animation, and exposes a Replay button. When Reduce Motion is enabled on the simulator (Settings ▸ Accessibility ▸ Motion), the animation pauses automatically and replay taps become no-ops.
+The home screen now centers a blue greeting that cycles through eight randomly selected languages. Each language uses a tailored Reanimated preset (bounce, pop, wave, flip) with different timing curves so the animation speed and motion type feel unique per locale. The Replay button reshuffles the language set and restarts the cycle. When Reduce Motion is enabled on the simulator (Settings ▸ Accessibility ▸ Motion), the animation pauses automatically and Replay becomes a no-op.
 
 ## Testing
 

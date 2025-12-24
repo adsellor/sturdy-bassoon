@@ -8,7 +8,10 @@ jest.mock('react-native-reanimated', () => {
   const sharedValue = (value: unknown) => ({ value });
   const withSequence = jest.fn((...args: unknown[]) => args[args.length - 1]);
   const withSpring = jest.fn((value: unknown) => value);
+  const withTiming = jest.fn((value: unknown) => value);
   const cancelAnimation = jest.fn();
+  const easingIdentity = (t: number) => t;
+  const easingWrapper = (_fn?: (t: number) => number) => easingIdentity;
 
   const Animated = new Proxy(
     {},
@@ -29,9 +32,14 @@ jest.mock('react-native-reanimated', () => {
     useAnimatedProps: (fn: () => Record<string, unknown>) => fn(),
     withSequence,
     withSpring,
+    withTiming,
     cancelAnimation,
     Easing: {
-      linear: () => {},
+      linear: easingIdentity,
+      quad: easingIdentity,
+      out: easingWrapper,
+      inOut: easingWrapper,
+      ease: easingIdentity,
     },
     runOnJS: (fn: (...args: unknown[]) => unknown) => fn,
     runOnUI: (fn: (...args: unknown[]) => unknown) => fn,

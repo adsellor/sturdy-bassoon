@@ -1,4 +1,4 @@
-import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo } from 'react';
+import { forwardRef, useCallback, useEffect, useImperativeHandle } from 'react';
 import { StyleSheet } from 'react-native';
 import Animated, {
   cancelAnimation,
@@ -6,59 +6,127 @@ import Animated, {
   useSharedValue,
   withSequence,
   withSpring,
+  withTiming,
+  Easing,
 } from 'react-native-reanimated';
 
 export interface HelloAnimationHandle {
-  play: () => void;
+  play: (presetOverride?: AnimationPreset) => void;
 }
 
 export interface HelloAnimationProps {
   text?: string;
   color?: string;
   reduceMotionEnabled?: boolean;
+  preset?: AnimationPreset;
+}
+
+export type AnimationType = 'bounce' | 'pop' | 'flip' | 'wave';
+
+export interface AnimationPreset {
+  type: AnimationType;
+  durationMs?: number;
+  intensity?: number;
 }
 
 const DEFAULT_TEXT = 'Hello';
 const DEFAULT_COLOR = '#2563EB';
+const DEFAULT_PRESET: AnimationPreset = {
+  type: 'bounce',
+  durationMs: 900,
+  intensity: 0.08,
+};
 
 export const HelloAnimation = forwardRef<HelloAnimationHandle, HelloAnimationProps>(
-  ({ text = DEFAULT_TEXT, color = DEFAULT_COLOR, reduceMotionEnabled = false }, ref) => {
+  (
+    { text = DEFAULT_TEXT, color = DEFAULT_COLOR, reduceMotionEnabled = false, preset },
+    ref,
+  ) => {
     const scale = useSharedValue(1);
-    const sequenceConfig = useMemo(
-      () => ({
-        first: { damping: 20, stiffness: 200 },
-        second: { damping: 16, stiffness: 240 },
-        settle: { damping: 18, stiffness: 180 },
-      }),
-      [],
-    );
+    const rotate = useSharedValue(0);
 
-    const play = useCallback(() => {
-      if (reduceMotionEnabled) {
+    const resetValues = useCallback(() => {
+      cancelAnimation(scale);
+      cancelAnimation(rotate);
+      scale.value = 1;
+      rotate.value = 0;
+    }, [rotate, scale]);
+
+    const play = useCallback(
+      (presetOverride?: AnimationPreset) => {
+        if (reduceMotionEnabled) {
+          resetValues();
+          return;
+        }
+
+        const resolvedPreset = presetOverride ?? preset ?? DEFAULT_PRESET;
+        const durationMs = resolvedPreset.durationMs ?? DEFAULT_PRESET.durationMs!;
+        const intensity = resolvedPreset.intensity ?? DEFAULT_PRESET.intensity!;
+
         cancelAnimation(scale);
-        scale.value = 1;
-        return;
-      }
+        cancelAnimation(rotate);
 
-      scale.value = withSequence(
-        withSpring(0.94, sequenceConfig.first),
-        withSpring(1.08, sequenceConfig.second),
-        withSpring(1, sequenceConfig.settle),
-      );
-    }, [reduceMotionEnabled, scale, sequenceConfig]);
+        switch (resolvedPreset.type) {
+          case 'pop':
+            scale.value = withSequence(
+              withTiming(1 + intensity * 1.5, { duration: durationMs * 0.4 }),
+              withTiming(1, {
+                duration: durationMs * 0.6,
+                easing: Easing.out(Easing.quad),
+              }),
+            );
+            rotate.value = withTiming(0, { duration: durationMs });
+            break;
+          case 'flip':
+            rotate.value = withSequence(
+              withTiming(180, {
+                duration: durationMs * 0.5,
+                easing: Easing.inOut(Easing.quad),
+              }),
+              withTiming(360, {
+                duration: durationMs * 0.5,
+                easing: Easing.inOut(Easing.quad),
+              }),
+            );
+            scale.value = withTiming(1, { duration: durationMs });
+            break;
+          case 'wave':
+            scale.value = withSequence(
+              withTiming(1 - intensity, { duration: durationMs * 0.25 }),
+              withTiming(1 + intensity, { duration: durationMs * 0.25 }),
+              withTiming(1 - intensity / 1.5, { duration: durationMs * 0.25 }),
+              withTiming(1, { duration: durationMs * 0.25 }),
+            );
+            rotate.value = withSequence(
+              withTiming(-6, { duration: durationMs * 0.5 }),
+              withTiming(6, { duration: durationMs * 0.5 }),
+            );
+            break;
+          case 'bounce':
+          default:
+            scale.value = withSequence(
+              withSpring(1 - intensity, { damping: 20, stiffness: 200 }),
+              withSpring(1 + intensity * 2, { damping: 14, stiffness: 260 }),
+              withSpring(1, { damping: 18, stiffness: 180 }),
+            );
+            rotate.value = withTiming(0, { duration: durationMs });
+            break;
+        }
+      },
+      [preset, reduceMotionEnabled, resetValues, rotate, scale],
+    );
 
     useImperativeHandle(ref, () => ({ play }), [play]);
 
     const animatedStyle = useAnimatedStyle(() => ({
-      transform: [{ scale: scale.value }],
+      transform: [{ scale: scale.value }, { rotate: `${rotate.value}deg` }],
     }));
 
     useEffect(() => {
       if (reduceMotionEnabled) {
-        cancelAnimation(scale);
-        scale.value = 1;
+        resetValues();
       }
-    }, [reduceMotionEnabled, scale]);
+    }, [reduceMotionEnabled, resetValues]);
 
     return (
       <Animated.Text

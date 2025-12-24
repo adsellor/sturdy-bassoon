@@ -48,5 +48,31 @@ describe('HelloAnimation', () => {
 
     expect(Reanimated.cancelAnimation).toHaveBeenCalled();
   });
+
+  it('honors animation preset overrides', () => {
+    const ref = createRef<HelloAnimationHandle>();
+
+    render(<HelloAnimation ref={ref} reduceMotionEnabled={false} />);
+
+    act(() =>
+      ref.current?.play({
+        type: 'flip',
+        durationMs: 1200,
+        intensity: 0.05,
+      }),
+    );
+
+    expect(Reanimated.withTiming).toHaveBeenCalled();
+
+    act(() =>
+      ref.current?.play({
+        type: 'pop',
+        durationMs: 600,
+        intensity: 0.2,
+      }),
+    );
+
+    expect(Reanimated.withSequence).toHaveBeenCalled();
+  });
 });
 
